@@ -1,0 +1,7 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ production ]
+
+# (Similar to staging.yml, with appropriate environment variables)
