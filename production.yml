@@ -4,4 +4,34 @@ on:
   push:
     branches: [ production ]
 
-# (Similar to staging.yml, with appropriate environment variables)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: |
+          dotnet restore
+          dotnet publish -c Release -o dist/
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: staging-build
+          path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: staging-build
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }} 
+      - name: Deploy to App Service
+        run: |
+          az webapp deploy -g ${{ secrets.RESOURCE_GROUP_NAME }} -n ${{ secrets.APP_SERVICE_NAME }} --path dist/
